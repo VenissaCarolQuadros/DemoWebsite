@@ -1,0 +1,83 @@
+ <!DOCTYPE html>
+<html>
+<body>
+<div id="super" class="container">
+  <h2>Search Address or Enter Coordinates</h2>
+  <input type="text" id="addressInput" placeholder="Enter address" style="width: 300px;" />
+  <button onclick="searchAddress()">Search by Address</button>
+  <br><br>
+  <input type="text" id="latInput" placeholder="Latitude" style="width: 140px;" />
+  <input type="text" id="lonInput" placeholder="Longitude" style="width: 140px;" />
+  <button onclick="searchByCoordinates()">Search by Coordinates</button>
+  <br><br>
+  <div id="mapContainer">
+    <iframe id="osmMap" src="" allowfullscreen></iframe>
+  </div>
+
+  <script>
+    async function searchAddress() {
+      const address = document.getElementById("addressInput").value;
+      if (!address) return;
+
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`);
+      const results = await response.json();
+
+      if (results.length === 0) {
+        alert("Address not found.");
+        return;
+      }
+
+      const lat = parseFloat(results[0].lat);
+      const lon = parseFloat(results[0].lon);
+
+      document.getElementById("latInput").value = lat;
+      document.getElementById("lonInput").value = lon;
+
+      updateMap(lat, lon);
+    }
+
+    function searchByCoordinates() {
+      const lat = parseFloat(document.getElementById("latInput").value);
+      const lon = parseFloat(document.getElementById("lonInput").value);
+
+      if (isNaN(lat) || isNaN(lon)) {
+        alert("Please enter valid latitude and longitude values.");
+        return;
+      }
+      getAddressFromCoordinates(lat, lon);
+      updateMap(lat, lon);
+    }
+
+    function updateMap(lat, lon) {
+      const bboxSize = 0.001;
+      const minLon = lon - bboxSize;
+      const minLat = lat - bboxSize;
+      const maxLon = lon + bboxSize;
+      const maxLat = lat + bboxSize;
+
+      const iframeUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${minLon}%2C${minLat}%2C${maxLon}%2C${maxLat}&layer=mapnik&marker=${lat}%2C${lon}`;
+      document.getElementById("osmMap").src = iframeUrl;
+    }
+
+    async function getAddressFromCoordinates(lat, lon) {
+      const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+      const data = await response.json();
+      document.getElementById("addressInput").value = data.display_name;
+    }
+
+    window.onload = () => {
+      const lat = 45.50598165;
+      const lon = -73.5761523142163;
+      updateMap(lat, lon);
+      getAddressFromCoordinates(lat, lon);
+      document.getElementById("latInput").value = lat;
+      document.getElementById("lonInput").value = lon;
+    };
+
+  </script>
+  </div>
+
+
+
+</body>
+</html> 
